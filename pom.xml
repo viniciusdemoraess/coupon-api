@@ -19,7 +19,7 @@
     <name>coupon-api</name>
     <description>Coupon API</description>
 
-    <!-- 🔑 Java estável para Spring Boot 3 -->
+    <!-- Java estável para Spring Boot 3 -->
     <properties>
         <java.version>17</java.version>
     </properties>
