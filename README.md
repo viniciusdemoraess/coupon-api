@@ -202,6 +202,54 @@ Swagger:
 
 `http://localhost:8080/h2-console`
 
+
+## 🔄 Integração Contínua (CI)
+
+Este projeto possui uma pipeline de **Integração Contínua (CI)** configurada utilizando **GitHub Actions**, com o objetivo de garantir **qualidade**, **estabilidade** e **confiabilidade** do código.
+
+### 🛠️ O que a pipeline faz
+
+A pipeline é executada automaticamente nos seguintes eventos:
+
+- Push para a branch `main`
+- Abertura de Pull Requests para a branch `main`
+
+Durante a execução, os seguintes passos são realizados:
+
+1. Checkout do código-fonte
+2. Configuração do ambiente **Java 17 (Temurin)**
+3. Execução do build e dos testes com Maven:
+   ```bash
+   mvn clean verify
+   ```
+
+Esse processo garante que:
+
+- O projeto compile corretamente
+- Todos os testes automatizados sejam executados
+- Qualquer falha seja detectada antes do merge ou versionamento
+
+## 🎯 Objetivo da CI no contexto do desafio
+
+A inclusão da pipeline de CI teve como objetivos:
+
+- Garantir que o código enviado esteja sempre em estado executável
+- Assegurar que as regras de negócio continuem cobertas por testes
+- Simular boas práticas adotadas em ambientes profissionais
+- Demonstrar familiaridade com conceitos básicos de CI/CD
+
+A pipeline foi mantida simples e objetiva, evitando overengineering, pois o foco do desafio é a qualidade do código e da modelagem, e não automações complexas.
+
+## 🏷️ Versionamento
+
+Após a validação do build e dos testes pela pipeline, o projeto recebe uma tag de versão (v1.0.0), representando um estado estável da entrega.
+
+Essa prática facilita:
+
+- Rastreabilidade da entrega
+- Versionamento do código
+- Evoluções futuras do projeto
+
 ## 📌 Considerações Finais
 
 Este projeto foi desenvolvido com foco em:
