@@ -90,7 +90,7 @@ public class CouponController {
 
 
     @Operation(
-            summary = "Listar todos os cupons ativos",
+            summary = "Listar todos os cupons",
             description = "Retorna todos os cupons que não foram excluídos (soft delete)"
     )
     @ApiResponses({
@@ -115,6 +115,7 @@ public class CouponController {
                     Marca um cupom como consumido.
                     
                     Regras:
+                    - O cupom deve estar publicado
                     - O cupom não pode estar expirado
                     - O cupom não pode já ter sido consumido
                     - O cupom não pode estar excluído
