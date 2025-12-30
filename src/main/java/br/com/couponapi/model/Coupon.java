@@ -5,8 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Entity
@@ -51,11 +51,12 @@ public class Coupon {
             String description,
             BigDecimal discountValue,
             OffsetDateTime expirationDate,
-            boolean published
+            boolean published,
+            Clock clock
     ) {
         this.code = normalizeCode(code);
         validateDiscount(discountValue);
-        validateExpiration(expirationDate);
+        validateExpiration(expirationDate, clock);
 
         this.description = description;
         this.discountValue = discountValue;
@@ -65,40 +66,39 @@ public class Coupon {
         this.redeemed = false;
     }
 
-    // ====== REGRAS DE NEGÓCIO ======
-
-    public void consume() {
+    public void consume(Clock clock) {
         if (this.deletedAt != null) {
             throw new CouponDeletedException("Cupom foi excluído");
+        }
+
+        if (!this.published) {
+            throw new CouponNotPublishedException("Cupom não está publicado");
         }
 
         if (this.redeemed) {
             throw new CouponAlreadyRedeemedException("Cupom já foi resgatado");
         }
 
-        ZoneOffset spOffset = ZoneOffset.of("-03:00");
-        OffsetDateTime nowSp = OffsetDateTime.now(spOffset);
-        OffsetDateTime expirationSp = this.expirationDate.withOffsetSameInstant(spOffset);
-        if (expirationSp.isBefore(nowSp)) {
-            this.status = CouponStatus.EXPIRED;
+        if (this.expirationDate.isBefore(OffsetDateTime.now(clock))) {
             throw new CouponExpiredException("Cupom expirou");
         }
 
         this.redeemed = true;
+        this.status = CouponStatus.INACTIVE;
     }
 
-    public void softDelete() {
+    public void softDelete(Clock clock) {
         if (this.deletedAt != null) {
             throw new CouponAlreadyDeletedException("Cupom já foi excluído");
         }
-        this.deletedAt = OffsetDateTime.now();
+        this.status = CouponStatus.DELETED;
+        this.deletedAt = OffsetDateTime.now(clock);
     }
 
     public boolean isDeleted() {
         return deletedAt != null;
     }
 
-    // ====== MÉTODOS PRIVADOS ======
 
     private String normalizeCode(String code) {
         String cleaned = code.replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
@@ -114,17 +114,27 @@ public class Coupon {
         }
     }
 
-    private void validateExpiration(OffsetDateTime date) {
-        ZoneOffset spOffset = ZoneOffset.of("-03:00");
-        OffsetDateTime nowSp = OffsetDateTime.now(spOffset);
-        OffsetDateTime expirationSp = date.withOffsetSameInstant(spOffset);
-        // Permite datas até 1 minuto no passado para lidar com latência de rede
-        if (expirationSp.isBefore(nowSp.minusMinutes(1))) {
+    private void validateExpiration(OffsetDateTime date, Clock clock) {
+        OffsetDateTime now = OffsetDateTime.now(clock);
+
+        if (date.isBefore(now.minusMinutes(1))) {
             throw new InvalidExpirationDateException("Data de expiração não pode ser no passado");
         }
     }
 
+    public CouponStatus getStatus(Clock clock) {
+        if (deletedAt != null) return CouponStatus.DELETED;
+        if (status == CouponStatus.INACTIVE) return CouponStatus.INACTIVE;
+        if (isExpired(clock)) return CouponStatus.INACTIVE;
+        return CouponStatus.ACTIVE;
+    }
+
+    public boolean isExpired(Clock clock) {
+        return expirationDate.isBefore(OffsetDateTime.now(clock));
+    }
+
+
     public enum CouponStatus {
-        ACTIVE, INACTIVE, EXPIRED
+        ACTIVE, INACTIVE, DELETED
     }
 }
