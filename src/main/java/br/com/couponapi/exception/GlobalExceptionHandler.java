@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler({CouponDeletedException.class, CouponAlreadyRedeemedException.class, CouponExpiredException.class, CouponAlreadyDeletedException.class})
+    @ExceptionHandler({CouponDeletedException.class, CouponAlreadyRedeemedException.class, CouponExpiredException.class, CouponAlreadyDeletedException.class, CouponNotPublishedException.class})
     public ResponseEntity<ErrorResponse> handleCouponStateExceptions(RuntimeException ex, WebRequest request) {
         log.warn("Erro de estado do cupom: {}", ex.getMessage());
         ErrorResponse errorResponse = new ErrorResponse("Operação inválida no cupom", ex.getMessage());
