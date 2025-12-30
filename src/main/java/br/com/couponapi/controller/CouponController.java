@@ -105,7 +105,7 @@ public class CouponController {
     })
     @GetMapping
     public List<CouponResponse> getAll() {
-        log.info("Recuperando todos os cupons ativos");
+        log.info("Recuperando todos os cupons");
         return service.getAll();
     }
 
