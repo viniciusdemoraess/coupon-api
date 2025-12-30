@@ -5,18 +5,26 @@ import br.com.couponapi.dtos.CouponResponse;
 import br.com.couponapi.exception.CouponAlreadyRedeemedException;
 import br.com.couponapi.exception.CouponCodeAlreadyExistsException;
 import br.com.couponapi.exception.CouponNotFoundException;
+import br.com.couponapi.exception.CouponNotPublishedException;
 import br.com.couponapi.exception.InvalidDiscountValueException;
 import br.com.couponapi.exception.InvalidExpirationDateException;
+import br.com.couponapi.model.Coupon;
 import br.com.couponapi.service.CouponService;
-import org.springframework.transaction.annotation.Transactional;
+import br.com.couponapi.config.TimeConfigTest;
 
+
+import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,10 +34,22 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Transactional
 @ActiveProfiles("test")
+@Import(TimeConfigTest.class)
 class CouponServiceTest {
 
     @Autowired
     CouponService service;
+
+    @Autowired
+    Clock clock;
+
+    private OffsetDateTime futureDate() {
+        return OffsetDateTime.now(clock).plusDays(5);
+    }
+
+    private OffsetDateTime pastDate() {
+        return OffsetDateTime.now(clock).minusDays(1);
+    }
 
     @Test
     void should_create_coupon_successfully() {
@@ -58,7 +78,7 @@ class CouponServiceTest {
                 "ABC123",
                 "Test",
                 BigDecimal.valueOf(0.2),
-                OffsetDateTime.now().plusDays(2),
+                futureDate(),
                 true
         );
 
@@ -72,7 +92,7 @@ class CouponServiceTest {
                 "ABC123",
                 "Test",
                 BigDecimal.ONE,
-                OffsetDateTime.now().minusDays(1),
+                pastDate(),
                 true
         );
 
@@ -101,7 +121,24 @@ class CouponServiceTest {
     }
 
     @Test
-    void should_soft_delete_coupon() {
+    void should_not_allow_consuming_unpublished_coupon() {
+        Coupon coupon = new Coupon(
+            "ABC123",
+            "Teste",
+            BigDecimal.ONE,
+            OffsetDateTime.now(clock).plusDays(1),
+            false,
+            clock
+        );
+
+        assertThrows(CouponNotPublishedException.class,
+            () -> coupon.consume(clock)
+        );
+    }
+
+
+        @Test
+        void should_soft_delete_coupon() {
         CouponResponse created = service.create(validRequest("DEL123"));
         UUID id = UUID.fromString(created.id());
 
@@ -126,7 +163,7 @@ class CouponServiceTest {
                 code,
                 "Test coupon",
                 BigDecimal.ONE,
-                OffsetDateTime.now().plusDays(5),
+                futureDate(),
                 true
         );
     }
