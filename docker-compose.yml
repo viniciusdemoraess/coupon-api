@@ -1,0 +1,22 @@
+services:
+  coupon-api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - h2-db
+
+  h2-db:
+    image: oscarfonts/h2
+    ports:
+      - "1521:1521"
+      - "81:81"
+    environment:
+      - H2_OPTIONS=-webAllowOthers
+    volumes:
+      - h2-data:/opt/h2-data
+
+volumes:
+  h2-data:
